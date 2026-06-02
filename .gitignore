@@ -1,0 +1,15 @@
+# Beauty-Marketplace-Sales-Analysis-
+
+# Mengabaikan satu file tertentu
+Free Technical Test — Beauty Market.txt
+product_code.xlsx
+transactions.xlsx
+
+# Mengabaikan semua file dengan ekstensi tertentu
+# *.log
+# *.env
+
+# Mengabaikan seluruh folder (misalnya folder hasil build/dependencies)
+# node_modules/
+# dist/
+# build/

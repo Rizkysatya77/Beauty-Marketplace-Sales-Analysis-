@@ -1,0 +1,25 @@
+﻿product_code,product_name,category,sub_category,shade,finish_type,skin_type_target,size_ml,launch_year,product_status,production_cost,selling_price,brand,local_or_import,halal_certified,vegan_product,bpom_registered,supplier_name,warehouse_location,stock_qty,reorder_point,rating_average,review_count
+PRD-0001,Velvet Air Cushion,Cushion,Cushion,Ivory Beige,Satin,Oily,5,2023,Active,103810,148402,Lunelle Beauty,Local,Yes,No,Yes,PT Beauty Ingredient Asia,Jakarta,867,105,4.2,9963
+PRD-0002,Glow Fit Cushion,Cushion,Cushion,Dark Brown,Natural,Oily,10,2026,Active,23478,127041,Lunelle Beauty,Local,Yes,Yes,Yes,PT Cosmetic Base Nusantara,Medan,2887,121,4.2,12609
+PRD-0003,Hydra Skin Cushion,Cushion,Cushion,Natural Beige,Natural,Dry,8,2024,Active,64118,107514,Lunelle Beauty,Local,Yes,No,Yes,PT Cosmetic Base Nusantara,Jakarta,3200,70,4.6,13688
+PRD-0004,Silk Two Way Cake,Two Way Cake,Two Way Cake,Peach Nude,Dewy,Dry,3,2023,Active,102397,213467,Lunelle Beauty,Local,Yes,Yes,Yes,PT Beauty Ingredient Asia,Medan,2377,166,4.6,6077
+PRD-0005,Soft Blur Powder Cake,Two Way Cake,Two Way Cake,Peach Nude,Dewy,Combination,20,2022,Active,41319,119839,Lunelle Beauty,Local,Yes,Yes,Yes,PT Glow Chemical,Medan,2311,286,4.6,9225
+PRD-0006,Glow Matte Lip Cream,Lipstick,Lipstick,Peach Nude,Matte,Oily,30,2022,Active,48785,168518,Lunelle Beauty,Import,Yes,No,Yes,PT Beauty Ingredient Asia,Bandung,4746,274,4.7,3583
+PRD-0007,Velvet Tint,Lipstick,Lipstick,Rose Pink,Natural,Oily,8,2023,Active,105909,201344,Lunelle Beauty,Import,Yes,No,Yes,PT Cosmetic Base Nusantara,Medan,3065,106,5.0,2366
+PRD-0008,Satin Lipstick,Lipstick,Lipstick,Natural Beige,Matte,Dry,5,2023,Discontinued,86784,181470,Lunelle Beauty,Local,Yes,No,Yes,PT Glow Chemical,Medan,4434,114,5.0,14203
+PRD-0009,Lip Mousse,Lipstick,Lipstick,Natural Beige,Satin,Combination,3,2024,Discontinued,21504,140670,Lunelle Beauty,Local,Yes,No,Yes,PT Beauty Ingredient Asia,Surabaya,4200,245,4.2,1843
+PRD-0010,Slim Precision Brow,Eyebrow,Eyebrow,Dark Brown,Dewy,Combination,30,2023,Active,101959,171076,Lunelle Beauty,Import,Yes,No,Yes,PT Beauty Ingredient Asia,Jakarta,3073,274,5.0,13318
+PRD-0011,Brow Pomade,Eyebrow,Eyebrow,Ivory Beige,Dewy,Dry,3,2025,Active,60306,121691,Lunelle Beauty,Local,Yes,Yes,Yes,PT Cosmetic Base Nusantara,Medan,4603,92,4.3,14393
+PRD-0012,Brow Mascara,Eyebrow,Eyebrow,Dark Brown,Dewy,Combination,10,2024,Discontinued,99507,184968,Lunelle Beauty,Import,Yes,Yes,Yes,PT Beauty Ingredient Asia,Bandung,624,136,4.0,9175
+PRD-0013,Hyper Curl Mascara,Mascara,Mascara,Dark Brown,Matte,Dry,20,2022,Active,50161,157289,Lunelle Beauty,Local,Yes,Yes,Yes,PT Glow Chemical,Jakarta,4311,110,4.3,8053
+PRD-0014,Lash Booster Mascara,Mascara,Mascara,Light Beige,Natural,Oily,30,2025,Discontinued,48080,148758,Lunelle Beauty,Local,Yes,Yes,Yes,PT Beauty Ingredient Asia,Medan,3002,158,4.4,14253
+PRD-0015,Flawless Foundation,Foundation,Foundation,Natural Beige,Matte,Sensitive,20,2024,Active,115561,152661,Lunelle Beauty,Local,Yes,Yes,Yes,PT Beauty Ingredient Asia,Medan,1248,158,4.2,7679
+PRD-0016,Skin Veil Foundation,Foundation,Foundation,Classic Black,Matte,Dry,20,2026,Active,52742,92622,Lunelle Beauty,Local,Yes,Yes,Yes,PT Beauty Ingredient Asia,Medan,4078,173,4.2,6670
+PRD-0017,Rosy Cheek Blush,Blush On,Blush On,Rose Pink,Matte,Sensitive,8,2025,Active,27685,79264,Lunelle Beauty,Import,Yes,No,Yes,PT Beauty Ingredient Asia,Bandung,2530,105,5.0,9589
+PRD-0018,Peach Bloom Blush,Blush On,Blush On,Ivory Beige,Satin,Dry,3,2026,Discontinued,116434,217500,Lunelle Beauty,Local,Yes,Yes,Yes,PT Cosmetic Base Nusantara,Jakarta,1622,67,4.6,11162
+PRD-0019,Pore Blur Primer,Primer,Primer,Natural Beige,Dewy,Dry,15,2022,Discontinued,50828,133751,Lunelle Beauty,Import,Yes,No,Yes,PT Beauty Ingredient Asia,Surabaya,2055,117,4.4,11104
+PRD-0020,Hydra Grip Primer,Primer,Primer,Classic Black,Satin,Dry,3,2025,Active,104607,173928,Lunelle Beauty,Local,Yes,Yes,Yes,PT Cosmetic Base Nusantara,Surabaya,1185,288,4.3,1227
+PRD-0021,Sharp Line Eyeliner,Eyeliner,Eyeliner,Cherry Red,Dewy,Sensitive,30,2026,Active,52018,130452,Lunelle Beauty,Local,Yes,No,Yes,PT Cosmetic Base Nusantara,Jakarta,1200,117,4.1,1853
+PRD-0022,Ultra Black Liner,Eyeliner,Eyeliner,Light Beige,Satin,Combination,15,2023,Active,117310,219822,Lunelle Beauty,Local,Yes,No,Yes,PT Cosmetic Base Nusantara,Medan,2157,281,4.9,932
+PRD-0023,Berry Lip Balm,Lip Balm,Lip Balm,Rose Pink,Satin,Dry,3,2024,Active,32097,145233,Lunelle Beauty,Import,Yes,Yes,Yes,PT Cosmetic Base Nusantara,Medan,4619,230,4.4,258
+PRD-0024,Honey Lip Balm,Lip Balm,Lip Balm,Light Beige,Matte,Combination,15,2026,Active,34663,74525,Lunelle Beauty,Import,Yes,Yes,Yes,PT Beauty Ingredient Asia,Surabaya,3087,280,4.9,14201

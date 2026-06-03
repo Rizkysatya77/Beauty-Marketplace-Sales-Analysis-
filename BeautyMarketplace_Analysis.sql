@@ -25,7 +25,7 @@ CREATE OR REPLACE VIEW `sales_analysis` AS
 with Basedata as(
   select 
     ft.transaction_id ,
-	ft.transaction_date DATETIME,
+	ft.transaction_date,
     DATE_FORMAT(STR_TO_DATE(transaction_date, '%d/%m/%Y'), '%W') AS Day_of_Week,
     ft.order_time,
 	ft.platform ,
@@ -49,6 +49,7 @@ with Basedata as(
 	ft.customer_rating ,
 	ft.returned_flag  ,
     pc.product_name,
+    pc.product_code,
     pc.category,
     pc.shade,
     pc.production_cost,
@@ -156,12 +157,11 @@ select
 	  ROW_NUMBER() OVER (ORDER BY sum(gross_sales) Desc) as Ranking,
 	  platform AS Platform,
       sum(selling_price) AS Total_HargaJual_Barang,
-      sum(stock_qty) AS Total_StockBarang,
       sum(quantity) AS Total_Terjual,
       sum(production_cost) AS Total_Biaya_Produksi,
       sum(shipping_cost) AS Total_Biaya_Pengiriman,
       sum(platform_fee) AS Total_Platform_Fee,
-	  sum(discount_amount) AS Total_Platform_Fee,
+	  sum(discount_amount) AS Total_discount_amount,
       sum(gross_sales) AS Total_Revenue, 
       sum(net_profit) AS Total_Profit,
       round(avg(customer_rating), 2) AS Avg_Rating_Customer
@@ -175,7 +175,7 @@ select
       customer_gender AS Customer_Gender,
       sum(quantity) AS Total_Terjual,
 	  sum(gross_sales) AS Total_Revenue, 
-      sum(net_sales) AS Penjualan_Bersih,
+      sum(net_profit) AS  Total_Profit,
       /*
       -- CONCAT('Rp ', FORMAT(sum(production_cost), 2)) AS Biaya_Produksi,
       -- CONCAT('Rp ', FORMAT(sum(selling_price), 2)) AS Harga_jual,
@@ -189,13 +189,54 @@ group by platform, customer_gender;
 
 /*
 	Analysis : 
-				
+				Secara keseluruhan, adanya anomali kepuasan pelanggan (rating) yang berbanding terbalik antar gender dan platform (kanal penjualan). Karena kontradiktif (omnichannel paradox)
+				dimana segmen Female mendominasi pembelian secara Online namun memiliki rating terendah, sementara segmen Male mendominasi pasar Offline namun memberikan rating terendah. Rating bisnis
+                tertahan diangka kritis (2.9 - 3.11 dari skala 5), artinya ada kejanggalan yang kontras dalam pemenuhan ekspektasi pelanggan yang terkait dengan Service, Produk atau Operasional
+                Bisnis.
+                
+                Volume penjualan yang masif membuktikan bahwa traksi pasar digital terbukti sangat kuat dan sehat secara profitabilitas. Campaign digital yang digunakan sukses menarik pasar
+                Female yang implusif dalam berbelanja online. Namun mereka memiliki ekspektasi detail product yang tinggi terutama saat membeli barang melalui online. Jika ada ketidaksesuaian (gap) dengan
+                ekspektasi mereka, misalnya adanya keterlambatan pengiriman, barang rusak ketika sampai karena pengiriman atau warna, ukuran, bahan tidak sesuai dengan foto, video atau deskripsi pejelasan product. Hal ini yang membuat mereka 
+                tidak segan untuk memberikan rating rendah. Akan tetapi berkebalikan jika segmen Female berbelanja secara offline, mereka tidak segan untuk memberikan rating tinggi 3.11. 
+                Hal ini karena ekspektasi mereka bisa terpenuhi karena bisa melihat product secara langsung, menyentuh bahkan mencoba product tersebut yang menghilangkan keraguan dan ketidakpastian.
+                Namun terbalik dengan segmen Male, mereka memberikan rating tertinggi sebesar 3.04 dalam berbelanja secara online. Hal ini mungkin karena effisiensi, cepat dan tanpa ribet. Faktor tersebut
+                menjadi acuan segemen Male untuk memberikan rating tinggi. Akan tetapi jika segmen Male diberikan pilihan untuk berbelanja secara offline (toko fisik), jika ekspektasi mereka terhadap
+                service atau kemudahan tidak terpenuhi (misal : antrian lama, stock habis dan service yang kurang sigap). Maka mereka tidak segan untuk memberikan reting lebih rendah (2.97-2.98)
+                
+				Berdasarkan data, Website menjadi platform paling efisien (Most Profitable Channel) dengan Cost shipping terendah (3,28%) dan Biaya plafform paling minim (1,74%). Meskipun
+                secara volume penjulan paling kecil, namun profit margin bersihnya paling besar yaitu 67,99%. Sementara itu Tiktok menjadi platform paling menguras Margin paling besar, dimana
+                untuk biaya shipping memakan margin sebanyak 3,33% dan fee platform 12,88%. Hal ini berimplikasi pada margin keutungan menjadi yang paling rendah yaitu 66,46%. Akan tetapi
+                Shoppe menjadi Best All-Rounder dalam volume penjualan dan efisiensi biaya, dengan fee platform sebesar 12,11% menghasilkan margin keutungan yang sehat dan ke-2 terbesar yaitu 67,47% hanya 
+                selisih tipis dari website. Namun untuk toko offline menjadi platform dengan biaya tertinggi sebesar 13,28%, hal ini merepresentasikan cost operasional, sewa tempat, listrik,
+                gaji karyawan dll. Walaupun cost operasinal lebih tinggi sedikit dari biaya pltform online, karena cost shipping yang rendah hal ini berimplikasi pada margin keuntungan yang tetap
+                terjaga stabil di angka 66,79%.
     
     Rekomendasi Stratergi :
+							- Audit kembali biaya vendor logistik dan packaging, hal ini untuk memastikan apakah dengan cost yang telah dialokasikan untuk packaging dan shipping. Cukup untuk 
+                            memproteksi barang yang dikirim dengan benar. Maka jika dirasa kurang lebih baik menaikan sedikit cost shipping untuk biaya packaging dari pada kehilangan reputasi
+                            toko akibat rating yang rendah.
+                            - Alihkan sebagian anggaran untuk melakukan campaign atau iklan digital ke platform website karena memberikan profit terbesar dibanding platform lainnya, dengan 
+                            target utama adalah pelanggan loyalist yang telah percaya pada product yang dijual. 
+                            - Lakukan Audit kembali untuk platform online terutama Tiktok, untuk efisiensi biaya-biaya yang bisa dipangkan agar tidak memotong margin profit yang terlalu besar. 
+                            - Mempertahankan Formula Operasional pada platform Shopee dengan memantau terus sistem manajemen stock, pengemasan, shipping dan keikutsertaan campaign yang dibuat
+                            oleh pihak Shopee. Hal ini bisa menjadi benchmark untuk mengoptimalkan penjualan pada platform online lainnya.
 */
+
 /*
 	Product Insight
 */
+-- Best Category Product Selling
+select 
+		ROW_NUMBER() OVER (ORDER BY sum(quantity) Desc) as Ranking,
+        category AS Category,
+        sum(quantity) AS Total_Terjual,
+        sum(gross_sales) AS Total_Revenue,
+        sum(net_profit) AS Penjualan_Bersih,
+        round(avg(rating_average), 2) Product_Rating,
+        sum(review_count) Review_Count
+from sales_analysis as sa
+group by category;
+
 -- Best Product by profit_margin_pct
 SELECT 
 	ROW_NUMBER() OVER (ORDER BY ROUND(SUM(net_profit) / NULLIF(SUM(gross_sales), 0), 4) Desc) as Ranking,
@@ -204,11 +245,9 @@ SELECT
     SUM(gross_sales) AS total_revenue,
     SUM(net_profit) AS total_profit,
     -- Margin percentage untuk melihat efisiensi
-    ROUND(SUM(net_profit) / NULLIF(SUM(gross_sales), 0), 4) AS profit_margin_pct
+    ROUND(SUM(net_profit) / NULLIF(SUM(gross_sales), 0) *100, 2) AS profit_margin_pct
 FROM sales_analysis 
-GROUP BY product_name
--- ORDER BY profit_margin_pct DESC 
-;
+GROUP BY product_name;
 
 -- Top 10 Best Selling Product, Revenue and Net Sales
 select 
@@ -216,11 +255,12 @@ select
 		product_name,
         sum(quantity) AS Total_Terjual,
         sum(gross_sales) AS Total_Revenue,
-        sum(net_sales) AS Penjualan_Bersih,
+        sum(net_profit) AS Penjualan_Bersih,
         round(avg(rating_average), 2) Product_Rating,
-        FORMAT(sum(review_count), 0) Review_Count
+        sum(review_count) Review_Count
 from sales_analysis as sa
-group by product_name;
+group by product_name
+limit 10;
 
 -- Top 10 Low Selling Product, Revenue and Net Sales
 select 
@@ -228,32 +268,63 @@ select
 		product_name,
         sum(quantity) AS Total_Terjual,
         sum(gross_sales) AS Total_Revenue,
-        sum(net_sales) AS Penjualan_Bersih,
+        sum(net_profit) AS Penjualan_Bersih,
         round(avg(rating_average), 2) Product_Rating,
-        FORMAT(sum(review_count) ,0) Review_Count
+        sum(review_count) Review_Count
 from sales_analysis as sa
 group by product_name
 limit 10;
 
--- Category Selling
- select 
-		ROW_NUMBER() OVER (ORDER BY sum(quantity) Desc) as Ranking,
-        category AS Category,
-        sum(quantity) AS Total_Terjual,
-        round(avg(rating_average), 2) Product_Rating,
-        FORMAT(sum(review_count) ,0) Review_Count
-from sales_analysis as sa
-group by category;
-
 -- The Most of Products ('Returned', 'Cancelled', 'Delivered')
+/*
  select 
 		ROW_NUMBER() OVER (ORDER BY sum(quantity) Desc) as Ranking,
         product_name AS Product_Name,
         delivery_status AS Delivery_Status, 
-        sum(quantity) AS Total_Product_Cancelled
+        sum(quantity) AS Total_Product
 from sales_analysis as sa
-where delivery_status = 'Returned'
-group by product_name;
+where delivery_status = 'Delivered'
+group by product_name
+ORDER BY sum(quantity) Desc
+;
+*/
+WITH Cancelled AS (
+    SELECT 
+        product_name AS Cancelled_Product,
+        SUM(quantity) AS Cancelled_Qty,
+        ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn
+    FROM sales_analysis
+    WHERE delivery_status = 'Cancelled'
+    GROUP BY product_name
+), 
+Returned AS (
+    SELECT 
+        product_name AS Returned_Product,
+        SUM(quantity) AS Returned_Qty,
+        ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn
+    FROM sales_analysis
+    WHERE delivery_status = 'Returned'
+    GROUP BY product_name
+),
+Delivered AS (
+    SELECT 
+        product_name AS Delivered_Product,
+        SUM(quantity) AS Delivered_Qty,
+        ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn
+    FROM sales_analysis
+    WHERE delivery_status = 'Delivered'
+    GROUP BY product_name
+)
+SELECT 
+    c.Cancelled_Product,
+    c.Cancelled_Qty,
+    r.Returned_Product,
+    r.Returned_Qty,
+    d.Delivered_Product,
+    d.Delivered_Qty
+FROM Cancelled c
+INNER JOIN Returned r ON c.rn = r.rn
+INNER JOIN Delivered d ON c.rn = d.rn;
 
 -- Which products need to be restocked more quickly 
 select 
@@ -266,63 +337,40 @@ group by product_name
 order by Total_Selling desc;
 
 /*
-	Campaign & Discount Insight
+	Analysis :
+				Best Category product yang banyak terjual adalah pewarna bibir (Lipstick), dengan margin tebal (>74%) adalah penggerak utama volume akuisisi pasar platform online
+                (Tiktok & Shopee). Akan tetapi akibat tingginya pengembalian barang (Returned) pada kategori product kompleks kempa-kemas (Foundation, Lipstick dan Cushion) secara masif. Hal ini
+                dapat menggerus profitabilitas bisnis karena cost pengiriman bertambah. Hal ini mengindikasikn karena masalah akurasi visual/warna product pada platform online yang memicu 
+                anomali kepuasaan consumen, yang dimana consumen wanita mendominasi pembelian online akan tetapi mereka memberikan rating terendah.
+                
+                Walaupun Lipstick Adalah Best Seller nomor 1 (1.351 unit terjual dengan omzet Rp230,2 Juta). Dengan produk seperti Lip Mousse (76,76%) dan Berry Lip Balm (75,60%) memegang 
+                profit margin tertinggi dari seluruh portofolio produk. Namun mencatat angka pembatalan (Cancelled) sangat tinggi (25 unit) dan retur (15 unit), hal ini mungkin dipicu karena 
+                keputusan implusif konsumen saat implusif saat Flash Sale atau karena ketidak sesuaian warna (shade) saat barang tiba. Kemudian product (Foundation & Cushion) terjual sangat
+                rendah dengan profit margin yang dihasilkan sekitar (56% - 60%). Dimana product Skin Veil Foundation paling banyak diretur di seluruh lini bisnis (35 unit), disusul oleh 
+                Flawless Foundation (24 unit). Hal ini mungkin terkait mengenai akurasi warna kulit (skin tone matching), karena jika dijual secara online tanpa panduan undertone yang jelas. 
+                Konsumen yang membeli salah warna akan kecewa dan memberikan rating rendah, konsumen akan mengajukan retur barang yang akan membuat biaya pengiriman membengkak dan margin product 
+                akan semakin tergerus oleh biaya operasional retur tersebut. Kategori Blush On dan Eyebrow Blush memegang rekor sempurna dengan Rating Produk 5 murni dari hampir 1 juta ulasan, 
+                dengan angka retur menengah (15 unit). Kategori Eyebrow juga kokoh di peringkat 2 penjualan total (937 unit). Produk e-commerce yang memiliki tingkat kepuasan sempurna (Rating 5.0) 
+                dan volume tinggi seperti Rosy Cheek Blush adalah senjata terbaik untuk dijadikan Produk Gimmick / Hadiah (Free Gift). Daripada memberikan "Diskon Besar" yang terbukti menurunkan 
+                loyalitas konsumen (repeat rate turun ke 11,76%), lebih baik berikan promosi: "Beli Foundation Gratis Rosy Cheek Blush". Ini akan mendongkrak kepuasan transaksi secara instan.
+				
+                Berdasarkan data, terdapat pola anomaly antara kepuasaan produk individu dengan kepuasaan platform per gender. Perbedaan tajam tersebut membuktikan isu keterlambatan / kerusakan 
+                saat pengiriman online, hal ini yang membuat mereka memberikan rating toko rendah. Untuk mengatasi masalah tersebut alokasi penempatan stock perlu dipindahkan ke Gudang fulfillment 
+                logistic online terdekat untuk mempercepat durasi pengiriman dan pengemasan barang guna menyelamatkan rating toko. 
+				
+    Rekomendasi Strategi :
+							- Untuk menekan angka retur akibat konsumen kesulitan memilih shade / warna product, perlu membuat fitur Filter AR/TRY-ON warna di Tiktok Shop atau menggunakan
+							  model dengan berbagai variasi warna kulit asli tanpa tambahan filter studio yang berlebihan.
+							- Tingginya pembatalan saat Campaign/iklan digital karena sifat konsumen yang implusif terhadap diskon besar (price-hunter) sebaiknya dibanding memberikan diskon
+                              besar dialihkan ke Campaign/promo building menggunakan product rating tinggi seperti Blush On.
 */
--- Performance Campaign
-select 
-		row_number() over(ORDER BY sum(quantity) desc) as Ranking,
-		campaign_name AS Campaign_Name,
-		sum(quantity) AS Total_Sell,
-        sum(gross_sales) AS Total_Revenue
-from sales_analysis as sa
-group by campaign_name;
-
--- Apakah diskon besar meningkatkan repeat transaction?
-SELECT 
-    CASE 
-        WHEN discount_amount > threshold.Q3 THEN 'Diskon Sangat Besar' 
-        WHEN discount_amount > threshold.Q2 and discount_amount <= threshold.Q3 THEN 'Diskon Besar' 
-        WHEN discount_amount > threshold.Q1 and discount_amount <= threshold.Q2 THEN 'Diskon Sedang' 
-        WHEN discount_amount > 0 and discount_amount <= threshold.Q1 THEN 'Diskon Kecil'
-        ELSE 'Tanpa Diskon'
-    END AS kategori_diskon,
-    COUNT(DISTINCT subquery.customer_id) AS total_pelanggan,
-    -- Menghitung pelanggan yang bertransaksi lebih dari 1 kali
-    COUNT(DISTINCT CASE WHEN subquery.total_transaksi_per_user > 1 THEN subquery.customer_id END) AS jumlah_repeat_customer,
-    -- Persentase Repeat Order
-    Concat(round((COUNT(DISTINCT CASE WHEN subquery.total_transaksi_per_user > 1 THEN subquery.customer_id END) / COUNT(DISTINCT subquery.customer_id)) * 100, 2), '%')AS repeat_rate_persen
-FROM (
-	 -- Subquery 1: Mengambil data transaksi per pelanggan
-    SELECT 
-        customer_id,
-        discount_amount,
-        COUNT(transaction_id) OVER(PARTITION BY customer_id, product_name) AS total_transaksi_per_user
-    FROM sales_analysis
-) AS subquery
-cross join	(
-		 -- Subquery 2: Menghitung nilai threshold
-		SELECT 
-			MAX(CASE WHEN kuartil = 1 THEN discount_amount END) AS Q1,
-			MAX(CASE WHEN kuartil = 2 THEN discount_amount END) AS Q2,
-			MAX(CASE WHEN kuartil = 3 THEN discount_amount END) AS Q3
-		FROM (
-			select
-				discount_amount,
-				NTILE(3) OVER (ORDER BY discount_amount) AS kuartil
-			FROM sales_analysis
-            WHERE discount_amount > 0
-        ) AS Qt__determination -- Subquery ini hanya menghasilkan 1 baris nilai threshold (kuartil)
-) AS threshold -- Subquery ini hanya menghasilkan 1 baris nilai threshold (kuartil)
-GROUP BY kategori_diskon
-order by total_pelanggan desc;
-
 
 /*
 	Customer Insight
 */
 -- Ratio (%) Customer Order By gender
- select 
-		customer_gender,
+select 
+		customer_gender AS Customer_Gender,
         sum(quantity) AS Total_Order,
         sum(gross_sales) AS Total_Revenue,
         round(avg(customer_rating), 2) AS Customer_Rating,
@@ -335,13 +383,14 @@ group by customer_gender;
  select 
 		ROW_NUMBER() OVER (ORDER BY sum(quantity) Desc) as Ranking,
         membership_tier AS Membership_Tier,
+        customer_gender AS Customer_Gender,
         sum(quantity) AS Total_Product_Terjual,
         concat('Rp ', FORMAT(sum(gross_sales), 2)) AS Total_Revenue,
         round(avg(customer_rating), 2) AS Customer_Rating,
         -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total quantity dari seluruh data (Male + Female). 
         concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
 from sales_analysis as sa
-group by membership_tier;
+group by membership_tier, customer_gender;
 
 -- Average Customer Rating by Age Distribution 
 select 
@@ -453,11 +502,28 @@ SELECT
 FROM rfm_skor
 ORDER BY nilai_monetary DESC
 )
-select * 
-from rfm_Segmentation
+select rf.*
+from rfm_Segmentation as rf
 -- Filtering segmen_pelanggan ('Champions','Loyal Customers','At-Risk','Hibernating')
 -- where segmen_pelanggan = 'Champions'
 ;
+
+/*
+Anlysis : 
+			Berdasarkan data, Revenue yang didatapatkan digerakkan oleh konsumen tier Bronze (59% Ration penjualan) dan didominasi oleh pria (30% total order) yang bersifat transaksional dan 
+			sensitive terhadap harga biasanya. Melalui kacamata Cohort Analysis, pola retensi repeat order consumen bulan-bulan awal berkisar antara 32%-46% secara masif dibulan ke-4 sampai ke-5 
+			turun ke angka 0%. Hal ini mengindikasikan bahwa program akuisisi pelanggan baru tidak menciptakan loyalitas pelanggan untuk jangka Panjang. Kegagalan tersebut bermula dari rendahnya 
+			indeks kepuasan pelanggan, tier penyumbang revenue terbesar broze(2.99) dan konsumen Wanita (2.97) kompak memberikan rating rendah. Hal ini diperparah dengan demografi usia customer, 
+			customer gen-Z (17 tahun memberikan rating 2.82) sementara itu gen milenial (33 tahun, rating (2.76) dan 37 tahun, rating (2.74)) memberikan penilaian terendah karena ketidak sesuian 
+			barang product yang mereka terima. Implikasi dari rusaknya siklus kepuasaan pelanggan terlihat dari hasil analysis RFM, dimana  puluhan konsumen dengan nilai belanja tinggi (monetary 
+			value besar di atas Rp300.000–Rp400.000) masuk kedalam kategori At-Risk (beresiko kabur) karena telah berhenti berbelanja selama 13 hingga 37 hari terakhir ketidak puasaan pascapembelian.
+			Sebaliknya kelompok Champions didominasi oleh akun-akun dengan jeda belanja lebih dari 120 hari karena history nilai belanja yang tinggi dimasa lalunya.
+
+Rekomendasi Strategi : 
+						-	Perbaikan kualitas pelayanan dengan program reaktivasi khusus (Win-back Campaign) untuk menyelamatkan pelanggan bernilai tinggi yang berstatus At-Risk sebelum mereka hilang total.
+						-	Merancang benefit keuntungan Membership Tier untuk mendorong pelanggan terutama Tier Bronze naik kelas ke Silver/Gold.
+						-	Membuat Campaign yang dipersonalisasi berbasis usia customer guna memperbaiki rating rendah, terutama pada segmen usia yang berpotensial menjadi customer loyalist
+*/
 
 /*
 	Operational Insight
@@ -480,7 +546,7 @@ group by returned_flag;
 from sales_analysis as sa
 group by Delivery_Status;
 
--- Best Warehouse_origin shipping
+-- Warehouse_origin shipping
 select 
 	  warehouse_origin AS Warehouse_Origin,
       sum(quantity) AS Total_Shipping,
@@ -489,28 +555,78 @@ from sales_analysis as sa
 group by warehouse_origin
 order by Total_Shipping DESC, Total_Shipping_Cost DESC;
 
--- Ratio Warehouse_origin by delivery_status
-select 
-	  warehouse_origin AS Warehouse_Origin,
-      sum(quantity) AS Total_Shipping,
-      delivery_status,
-      -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
-        concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 1),'%') Ratio
-from sales_analysis as sa
-group by warehouse_origin, delivery_status
-order by Total_Shipping asc;
-
 -- Ratio Warehouse_origin by delivery_status ('Cancelled', 'Returned', 'Delivered')
-select 
-	  warehouse_origin AS Warehouse_Origin,
-      delivery_status,
-      sum(quantity) AS Total_Shipping,
-      -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
-        concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
+WITH Cancelled AS (
+    SELECT 
+		  warehouse_origin AS Warehouse_Origin,
+		  delivery_status,
+		  sum(quantity) AS Cancelled_Shipping,
+          SUM(shipping_cost) as Total_Shipping_Cost,
+		  ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn,
+		  -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
+			concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
 from sales_analysis as sa
 where delivery_status = 'Cancelled'
-group by warehouse_origin, delivery_status
-order by Total_Shipping asc;
+group by warehouse_origin
+), 
+Returned AS (
+	SELECT 
+			  warehouse_origin AS Warehouse_Origin,
+			  delivery_status,
+			  sum(quantity) AS Returned_Shipping,
+              SUM(shipping_cost) as Total_Shipping_Cost,
+			  ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn,
+			  -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
+				concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
+	from sales_analysis as sa
+	where delivery_status = 'Returned'
+	group by warehouse_origin
+),
+Delivered AS (
+		SELECT 
+				  warehouse_origin AS Warehouse_Origin,
+				  delivery_status,
+				  sum(quantity) AS Delivered_Shipping,
+                  SUM(shipping_cost) as Total_Shipping_Cost,
+				  ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn,
+				  -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
+					concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
+		from sales_analysis as sa
+		where delivery_status = 'Delivered'
+		group by warehouse_origin
+)
+SELECT 
+    c.Warehouse_Origin,
+    c.Cancelled_Shipping,
+    c.Total_Shipping_Cost,
+    c.Ratio,
+    r.Returned_Shipping,
+    r.Total_Shipping_Cost,
+    r.Ratio,
+    d.Delivered_Shipping,
+    d.Total_Shipping_Cost,
+    d.Ratio
+FROM Cancelled c
+INNER JOIN Returned r ON c.rn = r.rn
+INNER JOIN Delivered d ON c.rn = d.rn;
+
+/*
+	Analysis : 
+				Meskipun rasio pengiriman sukses (Delivered) secara makro terlihat sehat sebesar 89.3%, namun secara bisnis mengalami penambahan biaya logistik terutama untuk warehouse 
+                dikota Medan dan Surabaya. Hal ini akibat pembatalan dan return yang cukup tinggi,  warehouse dikota Medan dan Surabaya merupakan tempat yang paling banyak mendapatkan 
+                pembatalan dan return jika diakumulasi sebesar 56% dari total kasus. Temuan ini memperkuat indikasi adanya masalah pada proses pengemasan dimana proteksi yang buruk dengan 
+                perjalanan transit yang panjang, membuat paket tersebut menjadi rusak. Sehingga faktor tersebut berkontribusi langsung terhadap rendahnya rating toko maupun product yang 
+                telah dianalisis sebelumnya. Sementara itu warehouse dikota Jakarta dan Bandung menunjukkan performa yang jauh lebih baik. Hal ini membuktikan bahwa manajemen operasional 
+                di kedua warehouse tersebut dapat mengendalikan cost biaya dengan sangat efisien, mereka bisa dijadikan benchmarks untuk warehouse lainnya guna menekan angka retur dan 
+                pembatalan. Secara geografis warehouse dikota Jakarta dan Bandung memang diuntungkan karena dekat dengan consumen dan infrastruktur logistik yang lebih matang.
+                
+    Rekomendasi Strategi :
+							- Menetapkan standarisasi untuk pengemasan dan pengiriman, dengan cara menerapkan double bubble wrap dan menggunakan kardus yang lebih tebal untuk product yang 
+                              rawan pecah dan pengiriman dengan perjalanan yang panjang.
+							- Mengaudit mitra pengiriman, terutama pengiriman dari warehouse medan dan surabaya.
+							- Menjadikan jakarta dan bandung sebagai warehouse fullfillment center utama agar product dapat dikirim dengan durasi yang lebih pendek hal ini bertujuan untuk 
+                              menyelamatkan rating toko. 
+*/
 
 /*
 	Insight by City  
@@ -536,65 +652,70 @@ group by city
 limit 10;
 
 -- City yang paling banyak melakukan ('Cancelled', 'Returned', 'Delivered')
-select 
-		row_number() over(ORDER BY sum(quantity) desc) as Ranking,
-		city,
-        delivery_status,
-		sum(quantity) AS Total_Order
+WITH Cancelled AS (
+    SELECT 
+		  city AS City,
+		  delivery_status AS Delivery_Status,
+		  sum(quantity) AS Cancelled_Shipping,
+		  ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn,
+		  -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
+		  concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
 from sales_analysis as sa
-where delivery_status = 'Returned'
-group by city;
+where delivery_status = 'Cancelled'
+group by City
+), 
+Returned AS (
+	SELECT 
+			  city AS City,
+			  delivery_status AS Delivery_Status,
+			  sum(quantity) AS Returned_Shipping,
+			  ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn,
+			  -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
+				concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
+	from sales_analysis as sa
+	where delivery_status = 'Returned'
+	group by City
+),
+Delivered AS (
+		SELECT 
+				  city AS City,
+			      delivery_status AS Delivery_Status,
+			      sum(quantity) AS Delivered_Shipping,
+				  ROW_NUMBER() OVER (ORDER BY SUM(quantity) DESC) AS rn,
+				  -- Fungsi window function over(), mengabaikan pengelompokan baris dan langsung menghitung total returned_flag dari seluruh data. 
+					concat(round((sum(quantity) / sum(sum(quantity)) over())*100, 0),'%') Ratio
+		from sales_analysis as sa
+		where delivery_status = 'Delivered'
+		group by City
+)
+SELECT 
+    c.City,
+    c.Cancelled_Shipping,
+    c.Ratio,
+    r.Returned_Shipping,
+    r.Ratio,
+    d.Delivered_Shipping,
+    d.Ratio
+FROM Cancelled c
+INNER JOIN Returned r ON c.rn = r.rn
+INNER JOIN Delivered d ON c.rn = d.rn;
 
 /*
-	Campaign & Discount Insight
+			Analysis :
+						Pertumbuhan bisnis digerakan oleh kota-kota satelit dan wilayah berkembang seperti Banjarmasin, Bengkulu dan Sukabumi. Namun terdapat anomaly yaitu transaksi 
+                        Denpasar bali, bali menjadi kota Top 4 pendapatan terbesar sekligus wilayah dengan tingkar retur dan pembatalan yang cukup tinggi di indonesia mencapai 8%. Hal 
+                        ini berimplikasi mengenai warehouse atau gudang logistik di Surabaya yang melakukan pengiriman ke Denpasar Bali, proses pengiriman yang panjang bisa menjadi salah 
+                        satu faktor yang membuat paket rusak yang menyebabkan mereka membatalkan ataupun menolak paket yang diantarkan oleh kurir. Yogyakarta dan Malang menjadi wilayah 
+                        dengan penjualan dan revenue terendah, mungkin dikarenakan ke 2 kota tersebut merupakan kota pelajar/mahasiswa yang didominasi oleh gen-z. Hal ini berkorelasi dengan
+                        analisis sebelumnya, dimana konsumen gen-z dengan usia 17 tahun memberikan rating terendah 2.82. Artinya campaign/strategi harga yang di buat tidak cocok dengan 
+                        kantong mereka, mereka memiliki ekpektasi mengenai harga yang ekonomis dan promo yang diberikan. Karena jika aspek harga dan promo yang tidak sesuai dengan 
+                        ekspektasi mereka, membuat mereka enggan untuk melakukan teransaksi.       
+                        
+            Rekomendasi Strategi :
+									-	Untuk pengiriman ke denpasar bali, bisa mengalihkan kerute menggunakan kargo penerbangan dari gudang di Jakarta, untuk memotong durasi pengiriman.
+									-	Melakukan promo bundling produk untuk targen siswa atau mahasiswa. Melakukan iklan digital secara masif berdasarkan market penetration ke wilayah 
+										dengan Return On Ad Spend (ROAS) yang tinggi.
 */
--- Performance Campaign
-select 
-		row_number() over(ORDER BY sum(quantity) desc) as Ranking,
-		campaign_name AS Campaign_Name,
-		sum(quantity) AS Total_Sell,
-        sum(gross_sales) AS Total_Revenue
-from sales_analysis as sa
-group by campaign_name;
-
--- Apakah diskon besar meningkatkan repeat transaction?
-SELECT 
-    CASE 
-        WHEN discount_amount > threshold.Q3 THEN 'Diskon Sangat Besar' 
-        WHEN discount_amount > threshold.Q2 and discount_amount <= threshold.Q3 THEN 'Diskon Besar' 
-        WHEN discount_amount > threshold.Q1 and discount_amount <= threshold.Q2 THEN 'Diskon Sedang' 
-        WHEN discount_amount > 0 and discount_amount <= threshold.Q1 THEN 'Diskon Kecil'
-        ELSE 'Tanpa Diskon'
-    END AS kategori_diskon,
-    COUNT(DISTINCT subquery.customer_id) AS total_pelanggan,
-    -- Menghitung pelanggan yang bertransaksi lebih dari 1 kali
-    COUNT(DISTINCT CASE WHEN subquery.total_transaksi_per_user > 1 THEN subquery.customer_id END) AS jumlah_repeat_customer,
-    -- Persentase Repeat Order
-    Concat(round((COUNT(DISTINCT CASE WHEN subquery.total_transaksi_per_user > 1 THEN subquery.customer_id END) / COUNT(DISTINCT subquery.customer_id)) * 100, 2), '%')AS repeat_rate_persen
-FROM (
-	 -- Subquery 1: Mengambil data transaksi per pelanggan
-    SELECT 
-        customer_id,
-        discount_amount,
-        COUNT(transaction_id) OVER(PARTITION BY customer_id, product_name) AS total_transaksi_per_user
-    FROM sales_analysis
-) AS subquery
-cross join	(
-		 -- Subquery 2: Menghitung nilai threshold
-		SELECT 
-			MAX(CASE WHEN kuartil = 1 THEN discount_amount END) AS Q1,
-			MAX(CASE WHEN kuartil = 2 THEN discount_amount END) AS Q2,
-			MAX(CASE WHEN kuartil = 3 THEN discount_amount END) AS Q3
-		FROM (
-			select
-				discount_amount,
-				NTILE(3) OVER (ORDER BY discount_amount) AS kuartil
-			FROM sales_analysis
-            WHERE discount_amount > 0
-        ) AS Qt__determination -- Subquery ini hanya menghasilkan 1 baris nilai threshold (kuartil)
-) AS threshold -- Subquery ini hanya menghasilkan 1 baris nilai threshold (kuartil)
-GROUP BY kategori_diskon
-order by total_pelanggan desc;
 
 /*
 	Analisis Berdasarkan waktu (DOD, MOM dan Jam Sibuk
@@ -682,3 +803,18 @@ select
         avg(Total_Revenue) over(order by Dates rows between 29 preceding and current row) AS Ma_30_Days
 from penjualan_harian
 order by Dates asc;
+
+/*
+	Analysis :
+				Kinerja penjualan bisnis sangat dipengaruhi oleh sifat implusif konsumen, konsumen wanita terutama generasi gen-z sangat suka berbelanja produk lipsitk (margin lipstik 76%)
+                dimana 41% transaksi terjadi di malam hari melalui platform Tiktok ataupun Shopee dengan siklus mingguannya mencapai puncaknya dihari jumat. 
+                Secara struktural penjualan, kestabilan penjualan tidak terjaga terbukti dengan analisis Moving Average (MA) dimana pada kuartal pertama sempat meningkat stabil akibat 
+                promosi yang masif, namun mengalami penurunan secar drastis  dibulan mei 2026 yang membuat omzet turun sebesar -34.52%. Penurunan tersebut mengindikasikan bahwa pertumbuhan 
+                dibulan-bulan sebelumnya hanya ditopang oleh diskon musiman bukan karena loyalitas pelanggan. Disisi lain, pembeli baru yang mendapatkan barangnya yang tidak sesuai dengan ekspektasinya,
+                membuat mereka enggan untuk belanja kembali. Akibatnya puluhan pelanggan potensial langsung bergeser menjadi status At-Risk. Puncaknya terjadi pada bulan Mei 2026, 
+                di mana tangki bensin promosi bisnis sudah habis, kemudian menyebabkan pertumbuhan bulanan hancur lebur di angka -34,52%.
+
+    Rekomendasi Strategi :
+							-	Memindahkan anggaran untuk program insentif khusus dibulan Januari-Maret supaya berbelanja kembali dibulan-bulan berikutnya.
+							-	Saat akhir pekan, coba buat promo ataupun voucher yang bisa diclaim di toko offline guna menyeimbangkan penurunan trafik online shop.
+*/

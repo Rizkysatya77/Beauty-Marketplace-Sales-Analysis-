@@ -1,5 +1,11 @@
 use sales_analysis_beautycosmetic;
 
+/*
+	HOW TO ACCESS SAFE MODE
+*/
+-- SET SQL_SAFE_UPDATES = 0;  -- SAFE MODE OFF 
+-- SET SQL_SAFE_UPDATES = 1;  -- SAFE MODE ON
+
 /* 
 	RENAME COLUMN 
 */
@@ -9,38 +15,64 @@ rename column ï»¿product_code to product_code;
 alter table sales_analysis_beautycosmetic.transactions
 rename column ï»¿transaction_id to transaction_id;
 
+/*
+Modify Column 
+*/
+alter table transactions 
+MODIFY COLUMN gross_sales DECIMAL(18, 2),
+MODIFY COLUMN discount_amount DECIMAL(18, 2),
+MODIFY COLUMN net_sales DECIMAL(18, 2),
+MODIFY COLUMN shipping_cost DECIMAL(18, 2),
+MODIFY COLUMN platform_fee DECIMAL(18, 2); 
+
+alter table product_code 
+MODIFY COLUMN production_cost DECIMAL(18, 2),
+MODIFY COLUMN selling_price DECIMAL(18, 2); 
+
+/* 
+	UPDATE VALUES COLUMNS
+*/
+update transactions /* REMAPPING FROM return_reason */ 
+set return_reason = case
+		when returned_flag = 'Yes' AND return_reason = 'No' then 'Unknow'
+		else return_reason
+		end; 
+
 /* 
 	DROP COLUMNS 
 */
-alter table sales_analysis
-drop column return_reason;
+-- alter table sales_analysis
+-- drop column return_reason;
 
 /* 
 	DROP TABEL 
 */
-DROP TABLE sales_analysis;
+-- DROP TABLE sales_analysis;
+-- DROP TABLE transactions_true;
 
 -- Membuat tabel View karena data yang digunakan berukuran kecil hingga menengah (di bawah juta baris)
 CREATE OR REPLACE VIEW `sales_analysis` AS
 with Basedata as(
   select 
-    ft.transaction_id ,
+	ft.transaction_id,
 	ft.transaction_date,
-    DATE_FORMAT(STR_TO_DATE(transaction_date, '%d/%m/%Y'), '%W') AS Day_of_Week,
+    DATE_FORMAT(STR_TO_DATE(transaction_date, '%d/%m/%Y'), '%W') AS day_of_week,
     ft.order_time,
 	ft.platform ,
 	ft.order_source ,
 	ft.customer_id ,
 	ft.customer_gender ,
 	ft.customer_age ,
-	ft.city  ,
-	ft.membership_tier ,
-	ft.quantity ,
-	ft.gross_sales ,
-	ft.discount_amount ,
-	ft.net_sales ,
-	ft.shipping_cost ,
-	ft.platform_fee ,
+	ft.city_uppercase,
+    CONCAT(UPPER(LEFT(ft.city_uppercase, 1)), LOWER(SUBSTRING(ft.city_uppercase, 2))) AS city,
+    CONCAT(UPPER(LEFT(ft.province_true, 1)), LOWER(SUBSTRING(ft.province_true, 2))) AS province,
+	ft.membership_tier,
+	ft.quantity,
+	ft.gross_sales,
+	ft.discount_amount,
+	ft.net_sales,
+	ft.shipping_cost,
+	ft.platform_fee,
     -- Hitung Net Profit di sini agar bisa langsung dianalisis
     (gross_sales - discount_amount - production_cost - shipping_cost - platform_fee) AS net_profit,
 	ft.campaign_name ,
@@ -48,6 +80,7 @@ with Basedata as(
 	ft.delivery_status ,
 	ft.customer_rating ,
 	ft.returned_flag  ,
+    ft.return_reason,
     pc.product_name,
     pc.product_code,
     pc.category,
@@ -609,6 +642,15 @@ SELECT
 FROM Cancelled c
 INNER JOIN Returned r ON c.rn = r.rn
 INNER JOIN Delivered d ON c.rn = d.rn;
+
+-- Total Return with Return Reason
+select 
+		return_reason,
+        count(return_reason) AS Total_return
+from sales_analysis
+where return_reason != 'No'
+group by return_reason
+order by Total_return desc;
 
 /*
 	Analysis : 

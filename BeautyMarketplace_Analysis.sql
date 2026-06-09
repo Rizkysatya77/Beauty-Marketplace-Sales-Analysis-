@@ -85,6 +85,8 @@ with Basedata as(
     pc.product_code,
     pc.category,
     pc.shade,
+    pc.skin_type_target,
+    pc.size_ml,
     pc.production_cost,
     pc.selling_price,
     pc.stock_qty,
@@ -401,6 +403,23 @@ order by Total_Selling desc;
 /*
 	Customer Insight
 */
+
+-- Customer order based on Skin Type
+select 
+		skin_type_target,
+        count(skin_type_target) as Total_Sales
+from sales_analysis as sa
+group by skin_type_target
+order by Total_Sales desc;
+
+-- Sales based on size_ml
+select 
+		size_ml AS Size_Ml,
+        count(size_ml) AS Total_Sold
+from sales_analysis as sa
+group by skin_type_target, Size_Ml
+order by Total_Sold desc;
+
 -- Ratio (%) Customer Order By gender
 select 
 		customer_gender AS Customer_Gender,
@@ -673,6 +692,17 @@ order by Total_return desc;
 /*
 	Insight by City  
 */
+-- Sales by Province
+select 
+		row_number() over(ORDER BY sum(quantity) desc, sum(gross_sales) desc) as Ranking,
+		province,
+		sum(quantity) AS Total_Sell,
+        sum(shipping_cost) AS Total_Shipping_Cost,
+        sum(gross_sales) AS Total_Revenue,
+        sum(net_profit) AS Total_Profit
+from sales_analysis as sa
+group by province;
+
 -- Top 10 Best Selling and Revenue By City
 select 
 		row_number() over(ORDER BY sum(quantity) desc, sum(gross_sales) desc) as Ranking,

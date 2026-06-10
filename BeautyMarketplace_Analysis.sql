@@ -7,6 +7,11 @@ use sales_analysis_beautycosmetic;
 -- SET SQL_SAFE_UPDATES = 1;  -- SAFE MODE ON
 
 /* 
+	ADD NEW COLUMN 
+*/
+ALTER TABLE transactions ADD COLUMN temp_date DATE;
+
+/* 
 	RENAME COLUMN 
 */
 alter table sales_analysis_beautycosmetic.product_code
@@ -16,7 +21,7 @@ alter table sales_analysis_beautycosmetic.transactions
 rename column ï»¿transaction_id to transaction_id;
 
 /*
-Modify Column 
+	MODIFY DATA TYPE COLUMN 
 */
 alter table transactions 
 MODIFY COLUMN gross_sales DECIMAL(18, 2),
@@ -38,6 +43,9 @@ set return_reason = case
 		else return_reason
 		end; 
 
+UPDATE transactions 
+SET temp_date = STR_TO_DATE(transaction_date, '%d/%m/%Y');
+
 /* 
 	DROP COLUMNS 
 */
@@ -50,12 +58,17 @@ set return_reason = case
 -- DROP TABLE sales_analysis;
 -- DROP TABLE transactions_true;
 
+/* 
+	CHANGES POSITION COLUM_A TO AFTER COLUMN_B 
+*/ 
+ALTER TABLE transactions MODIFY COLUMN temp_date date AFTER transaction_date;
+
 -- Membuat tabel View karena data yang digunakan berukuran kecil hingga menengah (di bawah juta baris)
 CREATE OR REPLACE VIEW `sales_analysis` AS
 with Basedata as(
   select 
 	ft.transaction_id,
-	ft.transaction_date,
+	ft.temp_date AS transaction_date,
     DATE_FORMAT(STR_TO_DATE(transaction_date, '%d/%m/%Y'), '%W') AS day_of_week,
     ft.order_time,
 	ft.platform ,
@@ -459,7 +472,7 @@ WITH
 bulan_pertama_user AS (
     SELECT 
         customer_id,
-        DATE_FORMAT(STR_TO_DATE(transaction_date, '%d/%m/%Y'), '%Y-%m-01') AS bulan_kohort
+        DATE_FORMAT(transaction_date, '%Y-%m-01') AS bulan_kohort
     FROM sales_analysis
 ),
 -- Langkah 2: Gabungkan dengan data transaksi untuk menghitung jarak bulan (Bulan ke-X)
@@ -467,10 +480,10 @@ jarak_transaksi AS (
     SELECT
         sa.customer_id,
         bp.bulan_kohort,
-        DATE_FORMAT(STR_TO_DATE(sa.transaction_date, '%d/%m/%Y'), '%Y-%m-01') AS bulan_transaksi,
+        DATE_FORMAT(sa.transaction_date, '%Y-%m-01') AS bulan_transaksi,
         -- Menghitung selisih bulan antara transaksi saat ini dengan transaksi pertama
-        (EXTRACT(YEAR FROM DATE_FORMAT(STR_TO_DATE(sa.transaction_date, '%d/%m/%Y'), '%Y-%m-01')) - EXTRACT(YEAR FROM bp.bulan_kohort)) * 12 +
-        (EXTRACT(MONTH FROM DATE_FORMAT(STR_TO_DATE(sa.transaction_date, '%d/%m/%Y'), '%Y-%m-01')) - EXTRACT(MONTH FROM bp.bulan_kohort)) AS jarak_bulan
+        (EXTRACT(YEAR FROM DATE_FORMAT(sa.transaction_date, '%Y-%m-01')) - EXTRACT(YEAR FROM bp.bulan_kohort)) * 12 +
+        (EXTRACT(MONTH FROM DATE_FORMAT(sa.transaction_date, '%Y-%m-01')) - EXTRACT(MONTH FROM bp.bulan_kohort)) AS jarak_bulan
     FROM sales_analysis as sa
     JOIN bulan_pertama_user bp ON sa.customer_id = bp.customer_id
 )
@@ -504,7 +517,7 @@ rfm_mentah AS (
     SELECT
         customer_id,
         -- Recency: Jumlah hari sejak transaksi terakhir hingga hari ini (asumsi hari ini menggunakan CURRENT_DATE)
-        DATEDIFF(CURRENT_DATE, MAX(STR_TO_DATE(transaction_date, '%d/%m/%Y'))) AS nilai_recency,
+        DATEDIFF(CURRENT_DATE, MAX(transaction_date)) AS nilai_recency,
         -- Frequency: Total jumlah transaksi unik
         COUNT(DISTINCT transaction_id) AS nilai_frequency,
         -- Monetary: Total nominal uang yang dihabiskan
@@ -816,7 +829,7 @@ from (
 WITH MonthlySales AS (
     SELECT 
         -- Mengambil tahun dan bulan dari ORDER_DATE
-        DATE_FORMAT(STR_TO_DATE(transaction_date, '%d/%m/%Y'), '%Y-%m') AS YearMonth,
+        DATE_FORMAT(transaction_date, '%Y-%m') AS YearMonth,
         SUM(quantity) AS Current_Month_Sales
     FROM sales_analysis
     GROUP BY YearMonth
@@ -860,7 +873,7 @@ group by Time_Order;
 -- Metrik Moving Average untuk melihat tren penjualan tanpa terganggu fluktuasi harian yang tajam
 with penjualan_harian AS (
 	SELECT 
-			STR_TO_DATE(transaction_date, '%d/%m/%Y') AS Dates,
+			transaction_date AS Dates,
             SUM(gross_sales) AS Total_Revenue
 	FROM 
 		sales_analysis
